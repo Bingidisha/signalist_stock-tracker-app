@@ -7,8 +7,19 @@ on:
     branches: [main]
 
 jobs:
-  typecheck:
+  typecheck-and-build:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      FINNHUB_API_KEY: ""
+      FINNHUB_BASE_URL: https://finnhub.io/api/v1
+      MONGODB_URI: mongodb://127.0.0.1:27017/abuk_invest_ci
+      BETTER_AUTH_SECRET: ci-only-secret-key-not-used-for-real-users-123456
+      BETTER_AUTH_URL: http://localhost:3000
+      GEMINI_API_KEY: ""
+      NODEMAILER_EMAIL: ""
+      NODEMAILER_PASSWORD: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,3 +32,5 @@ jobs:
         run: npm ci
       - name: TypeScript check
         run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build
