@@ -27,20 +27,27 @@ export async function setWatchlistStatus(symbol: string, company: string, added:
   try {
     const auth = await getAuth();
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) return { success: false, error: 'Sign in to save a watchlist.' };
+    if (!session?.user?.email) return { success: false, error: 'Sign in to save a watchlist.' };
 
     const normalizedSymbol = symbol.trim().toUpperCase();
     if (!normalizedSymbol) return { success: false, error: 'A stock symbol is required.' };
 
-    await connectToDatabase();
+    const mongoose = await connectToDatabase();
+    const db = mongoose.connection.db;
+    if (!db) throw new Error('MongoDB connection not found');
+    const dbUser = await db.collection('user').findOne<{ _id?: unknown; id?: string; email?: string }>({ email: session.user.email });
+    if (!dbUser) return { success: false, error: 'Your account could not be found in the database.' };
+    const userId = dbUser.id || String(dbUser._id || session.user.id);
+    if (!userId) return { success: false, error: 'Your account ID could not be found.' };
+
     if (added) {
       await Watchlist.findOneAndUpdate(
-        { userId: session.user.id, symbol: normalizedSymbol },
-        { $set: { company: company.trim() || normalizedSymbol }, $setOnInsert: { userId: session.user.id, symbol: normalizedSymbol, addedAt: new Date() } },
+        { userId, symbol: normalizedSymbol },
+        { $set: { company: company.trim() || normalizedSymbol }, $setOnInsert: { userId, symbol: normalizedSymbol, addedAt: new Date() } },
         { upsert: true, new: true }
       );
     } else {
-      await Watchlist.deleteOne({ userId: session.user.id, symbol: normalizedSymbol });
+      await Watchlist.deleteOne({ userId, symbol: normalizedSymbol });
     }
     return { success: true };
   } catch (error) {
