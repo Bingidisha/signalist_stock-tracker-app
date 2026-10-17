@@ -18,6 +18,7 @@ export const signUpWithEmail = async ({
     const auth = await getAuth();
     const response = await auth.api.signUpEmail({
       body: { email, password, name: fullName },
+      headers: await headers(),
     });
 
     // Save the onboarding answers against the real MongoDB user record.
@@ -75,7 +76,7 @@ export const signUpWithEmail = async ({
 export const signInWithEmail = async ({ email, password }: SignInFormData) => {
   try {
     const auth = await getAuth();
-    const response = await auth.api.signInEmail({ body: { email, password } });
+    const response = await auth.api.signInEmail({ body: { email, password }, headers: await headers() });
     return { success: true, data: response };
   } catch (e) {
     console.error("Sign in failed:", e);
