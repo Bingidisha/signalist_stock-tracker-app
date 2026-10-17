@@ -9,7 +9,7 @@ export default async function SearchPage() {
       <div>
         <p className="text-sm uppercase tracking-widest text-yellow-500">Explore the market</p>
         <h1 className="mt-2 text-3xl font-semibold text-white">Search stocks</h1>
-        <p className="mt-2 text-gray-400">Search by company name or ticker symbol to open its stock page.</p>
+        <p className="mt-2 text-gray-400">Search Nigerian Exchange companies by name or ticker. Configure Finnhub to add its supported international stocks and market news.</p>
       </div>
       <div className="rounded-xl border border-gray-700 bg-gray-900/60 p-6">
         <SearchCommand renderAs="button" label="Search companies and symbols" initialStocks={initialStocks} />
