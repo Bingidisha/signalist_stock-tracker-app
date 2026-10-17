@@ -24,14 +24,15 @@ declare global {
         required?: boolean;
     };
 
+    // Shared by sign-in and sign-up forms, whose field sets differ.
     type FormInputProps = {
         name: string;
         label: string;
         placeholder: string;
         type?: string;
-        register: UseFormRegister<SignUpFormData>;
+        register: (name: any, options?: any) => any;
         error?: FieldError;
-        validation?: RegisterOptions<SignUpFormData>;
+        validation?: RegisterOptions<any>;
         disabled?: boolean;
         value?: string;
     };
