@@ -19,7 +19,7 @@ declare global {
     type CountrySelectProps = {
         name: string;
         label: string;
-        control: Control;
+        control: Control<SignUpFormData>;
         error?: FieldError;
         required?: boolean;
     };
