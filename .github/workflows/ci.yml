@@ -29,7 +29,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=dev
       - name: TypeScript check
         run: npx tsc --noEmit
       - name: Production build
