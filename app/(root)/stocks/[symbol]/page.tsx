@@ -1,4 +1,7 @@
 import TradingViewWidget from "@/components/TradingViewWidget";
+import { getAuth } from "@/lib/better-auth/auth";
+import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
+import { headers } from "next/headers";
 import WatchlistButton from "@/components/WatchlistButton";
 import {
   SYMBOL_INFO_WIDGET_CONFIG,
@@ -11,6 +14,17 @@ import {
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
   const { symbol } = await params;
+  let isInWatchlist = false;
+  try {
+    const auth = await getAuth();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (session?.user?.email) {
+      const symbols = await getWatchlistSymbolsByEmail(session.user.email);
+      isInWatchlist = symbols.includes(symbol.toUpperCase());
+    }
+  } catch (error) {
+    if (!(error instanceof Error && error.message.includes("MONGODB_URI must be set"))) throw error;
+  }
   const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
   return (
@@ -42,7 +56,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
         {/* Right column */}
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            <WatchlistButton symbol={symbol.toUpperCase()} company={symbol.toUpperCase()} isInWatchlist={false} />
+            <WatchlistButton symbol={symbol.toUpperCase()} company={symbol.toUpperCase()} isInWatchlist={isInWatchlist} />
           </div>
 
           <TradingViewWidget
