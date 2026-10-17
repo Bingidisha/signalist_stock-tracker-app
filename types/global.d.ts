@@ -1,4 +1,4 @@
-import type { Control, FieldError, RegisterOptions, UseFormRegister } from 'react-hook-form';
+import type { Control, FieldError, FieldPath, RegisterOptions, UseFormRegister } from 'react-hook-form';
 
 declare global {
     type SignInFormData = {
@@ -17,7 +17,7 @@ declare global {
     };
 
     type CountrySelectProps = {
-        name: string;
+        name: FieldPath<SignUpFormData>;
         label: string;
         control: Control<SignUpFormData>;
         error?: FieldError;
@@ -29,9 +29,9 @@ declare global {
         label: string;
         placeholder: string;
         type?: string;
-        register: UseFormRegister;
+        register: UseFormRegister<SignUpFormData>;
         error?: FieldError;
-        validation?: RegisterOptions;
+        validation?: RegisterOptions<SignUpFormData>;
         disabled?: boolean;
         value?: string;
     };
@@ -42,11 +42,11 @@ declare global {
     };
 
     type SelectFieldProps = {
-        name: string;
+        name: FieldPath<SignUpFormData>;
         label: string;
         placeholder: string;
         options: readonly Option[];
-        control: Control;
+        control: Control<SignUpFormData>;
         error?: FieldError;
         required?: boolean;
     };
