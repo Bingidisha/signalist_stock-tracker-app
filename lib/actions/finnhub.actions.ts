@@ -3,6 +3,7 @@
 import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
 import { POPULAR_STOCK_SYMBOLS } from '@/lib/constants';
 import { cache } from 'react';
+import { searchLocalNGXStocks } from "@/lib/ngx-stocks";
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
@@ -97,8 +98,6 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
     throw new Error('Failed to fetch news');
   }
 }
-
-import { searchLocalNGXStocks } from "@/lib/ngx-stocks";
 
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
   const trimmed = typeof query === "string" ? query.trim() : "";
