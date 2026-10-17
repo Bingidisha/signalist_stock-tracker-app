@@ -2,27 +2,49 @@
 
 import { connectToDatabase } from '@/database/mongoose';
 import { Watchlist } from '@/database/models/watchlist.model';
+import { getAuth } from '@/lib/better-auth/auth';
+import { headers } from 'next/headers';
 
 export async function getWatchlistSymbolsByEmail(email: string): Promise<string[]> {
   if (!email) return [];
-
   try {
     const mongoose = await connectToDatabase();
     const db = mongoose.connection.db;
     if (!db) throw new Error('MongoDB connection not found');
-
-    // Better Auth stores users in the "user" collection
     const user = await db.collection('user').findOne<{ _id?: unknown; id?: string; email?: string }>({ email });
-
     if (!user) return [];
-
     const userId = (user.id as string) || String(user._id || '');
     if (!userId) return [];
-
     const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
-    return items.map((i) => String(i.symbol));
+    return items.map((item) => String(item.symbol));
   } catch (err) {
     console.error('getWatchlistSymbolsByEmail error:', err);
     return [];
+  }
+}
+
+export async function setWatchlistStatus(symbol: string, company: string, added: boolean) {
+  try {
+    const auth = await getAuth();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) return { success: false, error: 'Sign in to save a watchlist.' };
+
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    if (!normalizedSymbol) return { success: false, error: 'A stock symbol is required.' };
+
+    await connectToDatabase();
+    if (added) {
+      await Watchlist.findOneAndUpdate(
+        { userId: session.user.id, symbol: normalizedSymbol },
+        { $set: { company: company.trim() || normalizedSymbol }, $setOnInsert: { userId: session.user.id, symbol: normalizedSymbol, addedAt: new Date() } },
+        { upsert: true, new: true }
+      );
+    } else {
+      await Watchlist.deleteOne({ userId: session.user.id, symbol: normalizedSymbol });
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('setWatchlistStatus error:', error);
+    return { success: false, error: error instanceof Error && error.message.includes('MONGODB_URI') ? 'Configure MongoDB to save your watchlist.' : 'Could not update your watchlist.' };
   }
 }
