@@ -12,7 +12,7 @@ const Home = () => {
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
     return (
-        <div className="flex min-h-screen home-wrapper">
+        <div className="flex min-h-screen flex-col home-wrapper">
           <section className="mb-8 w-full rounded-xl border border-gray-800 bg-gray-900/50 p-5">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
