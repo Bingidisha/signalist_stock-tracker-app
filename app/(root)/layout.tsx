@@ -3,6 +3,10 @@ import { getAuth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+// This layout reads the current session and connects to MongoDB. It must run
+// for each request, not during Next.js static prerendering at build time.
+export const dynamic = "force-dynamic";
+
 const Layout = async ({ children }: { children: React.ReactNode }) => {
   // Keep the original authentication/database requirement. The dashboard must
   // not silently bypass login when MongoDB is missing.
