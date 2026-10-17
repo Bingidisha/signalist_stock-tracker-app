@@ -16,7 +16,7 @@ if(!cached) {
 }
 
 export const connectToDatabase = async () => {
-    if(!MONGODB_URI) throw new Error('MONGODB_URI must be set within .env');
+    if (!MONGODB_URI?.trim()) throw new Error('MONGODB_URI must be set in the environment.');
 
     if(cached.conn) return cached.conn;
 
@@ -31,7 +31,8 @@ export const connectToDatabase = async () => {
         throw err;
     }
 
-    console.log(`Connected to database ${process.env.NODE_ENV} - ${MONGODB_URI}`);
+    // Never log the connection URI: it contains database credentials.
+    console.log('Connected to MongoDB successfully.');
 
     return cached.conn;
 }
