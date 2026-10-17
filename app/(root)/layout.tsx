@@ -4,34 +4,25 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
-  try {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user) redirect("/sign-in");
+  // Keep the original authentication/database requirement. The dashboard must
+  // not silently bypass login when MongoDB is missing.
+  const auth = await getAuth();
+  const session = await auth.api.getSession({ headers: await headers() });
 
-    const user = {
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-    };
+  if (!session?.user) redirect("/sign-in");
 
-    return (
-      <main className="min-h-screen text-gray-400">
-        <Header user={user} />
-        <div className="container py-10">{children}</div>
-      </main>
-    );
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("MONGODB_URI must be set")) {
-      return (
-        <main className="min-h-screen text-gray-400">
-          <Header />
-          <div className="container py-10">{children}</div>
-        </main>
-      );
-    }
-    throw error;
-  }
+  const user = {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+  };
+
+  return (
+    <main className="min-h-screen text-gray-400">
+      <Header user={user} />
+      <div className="container py-10">{children}</div>
+    </main>
+  );
 };
 
 export default Layout;
