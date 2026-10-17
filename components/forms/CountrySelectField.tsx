@@ -25,7 +25,7 @@ import countryList from 'react-select-country-list';
 type CountrySelectProps = {
     name: string;
     label: string;
-    control: Control<any>;
+    control: Control<SignUpFormData>;
     error?: FieldError;
     required?: boolean;
 };
