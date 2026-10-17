@@ -98,84 +98,65 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
   }
 }
 
+import { searchLocalNGXStocks } from "@/lib/ngx-stocks";
+
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
+  const trimmed = typeof query === "string" ? query.trim() : "";
+  const localMatches = searchLocalNGXStocks(trimmed);
+  const token = process.env.FINNHUB_API_KEY || process.env.NEXT_PUBLIC_FINNHUB_API_KEY || "";
+
+  // NGX search works without an external key. Finnhub adds international/US
+  // results when configured, but is not treated as a source for NGX listings.
+  if (!token) return localMatches;
+
   try {
-    const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
-    if (!token) {
-      // The app can render without market data during initial setup.
-      // The search page explains that FINNHUB_API_KEY must be configured.
-      return [];
-    }
-
-    const trimmed = typeof query === 'string' ? query.trim() : '';
-
     let results: FinnhubSearchResult[] = [];
-
     if (!trimmed) {
-      // Fetch top 10 popular symbols' profiles
       const top = POPULAR_STOCK_SYMBOLS.slice(0, 10);
       const profiles = await Promise.all(
         top.map(async (sym) => {
           try {
             const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(sym)}&token=${token}`;
-            // Revalidate every hour
             const profile = await fetchJSON<any>(url, 3600);
-            return { sym, profile } as { sym: string; profile: any };
-          } catch (e) {
-            console.error('Error fetching profile2 for', sym, e);
-            return { sym, profile: null } as { sym: string; profile: any };
+            return { sym, profile };
+          } catch {
+            return { sym, profile: null };
           }
         })
       );
 
       results = profiles
-        .map(({ sym, profile }) => {
-          const symbol = sym.toUpperCase();
-          const name: string | undefined = profile?.name || profile?.ticker || undefined;
-          const exchange: string | undefined = profile?.exchange || undefined;
-          if (!name) return undefined;
-          const r: FinnhubSearchResult = {
-            symbol,
-            description: name,
-            displaySymbol: symbol,
-            type: 'Common Stock',
-          };
-          // We don't include exchange in FinnhubSearchResult type, so carry via mapping later using profile
-          // To keep pipeline simple, attach exchange via closure map stage
-          // We'll reconstruct exchange when mapping to final type
-          (r as any).__exchange = exchange; // internal only
-          return r;
-        })
-        .filter((x): x is FinnhubSearchResult => Boolean(x));
+        .filter(({ profile }) => profile?.name || profile?.ticker)
+        .map(({ sym, profile }) => ({
+          symbol: sym.toUpperCase(),
+          description: profile?.name || profile?.ticker || sym,
+          displaySymbol: sym.toUpperCase(),
+          type: "Common Stock",
+        }));
     } else {
-      const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}&token=${token}`;
+      const apiQuery = trimmed.replace(/^ngx:/i, "").trim();
+      const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(apiQuery)}&token=${token}`;
       const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
       results = Array.isArray(data?.result) ? data.result : [];
     }
 
-    const mapped: StockWithWatchlistStatus[] = results
-      .map((r) => {
-        const upper = (r.symbol || '').toUpperCase();
-        const name = r.description || upper;
-        const exchangeFromDisplay = (r.displaySymbol as string | undefined) || undefined;
-        const exchangeFromProfile = (r as any).__exchange as string | undefined;
-        const exchange = exchangeFromDisplay || exchangeFromProfile || 'US';
-        const type = r.type || 'Stock';
-        const item: StockWithWatchlistStatus = {
-          symbol: upper,
-          name,
-          exchange,
-          type,
-          isInWatchlist: false,
-        };
-        return item;
-      })
-      .slice(0, 15);
+    const internationalMatches: StockWithWatchlistStatus[] = results.map((r) => ({
+      symbol: (r.symbol || "").toUpperCase(),
+      name: r.description || r.symbol || "Unknown stock",
+      exchange: "US / International",
+      type: r.type || "Stock",
+      isInWatchlist: false,
+    }));
 
-    return mapped;
-  } catch (err) {
-    console.error('Error in stock search:', err);
-    return [];
+    const combined = [...localMatches, ...internationalMatches];
+    const unique = new Map<string, StockWithWatchlistStatus>();
+    for (const stock of combined) {
+      if (!stock.symbol) continue;
+      if (!unique.has(stock.symbol)) unique.set(stock.symbol, stock);
+    }
+    return [...unique.values()].slice(0, 20);
+  } catch (error) {
+    console.error("Finnhub stock search failed; showing local NGX results:", error);
+    return localMatches;
   }
 });
-
