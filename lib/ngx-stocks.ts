@@ -23,8 +23,7 @@ export const NGX_STOCKS: StockWithWatchlistStatus[] = [
   { symbol: "NGX:OKOMUOIL", name: "Okomu Oil Palm", exchange: "NGX", type: "Agriculture", isInWatchlist: false },
   { symbol: "NGX:WAPCO", name: "Lafarge Africa", exchange: "NGX", type: "Industrials", isInWatchlist: false },
   { symbol: "NGX:CUSTODIAN", name: "Custodian Investment", exchange: "NGX", type: "Financial Services", isInWatchlist: false },
-  { symbol: "NGX:GTCO", name: "Guaranty Trust Holding Company", exchange: "NGX", type: "Banking", isInWatchlist: false },
-];
+ ];
 
 export function searchLocalNGXStocks(query = ""): StockWithWatchlistStatus[] {
   const normalized = query.trim().toLowerCase().replace(/^ngx:/, "");
