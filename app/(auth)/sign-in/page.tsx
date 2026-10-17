@@ -6,7 +6,6 @@ import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
 import {signInWithEmail, signUpWithEmail} from "@/lib/actions/auth.actions";
 import {toast} from "sonner";
-import {signInEmail} from "better-auth/api";
 import {useRouter} from "next/navigation";
 
 const SignIn = () => {
@@ -26,7 +25,11 @@ const SignIn = () => {
     const onSubmit = async (data: SignInFormData) => {
         try {
             const result = await signInWithEmail(data);
-            if(result.success) router.push('/');
+            if(result.success) {
+                router.push('/');
+            } else {
+                toast.error('Sign in failed', { description: result.error || 'Please check your details and database setup.' });
+            }
         } catch (e) {
             console.error(e);
             toast.error('Sign in failed', {
