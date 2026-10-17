@@ -63,6 +63,12 @@ declare global {
         initialStocks: StockWithWatchlistStatus[];
     };
 
+    type UserForNewsEmail = {
+        id: string;
+        email: string;
+        name: string;
+    };
+
     type WelcomeEmailData = {
         email: string;
         name: string;
