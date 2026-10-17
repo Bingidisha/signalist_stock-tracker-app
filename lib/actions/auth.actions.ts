@@ -3,6 +3,7 @@
 import { getAuth } from "@/lib/better-auth/auth";
 import { inngest } from "@/lib/inngest/client";
 import { headers } from "next/headers";
+import { connectToDatabase } from "@/database/mongoose";
 
 export const signUpWithEmail = async ({
   email,
@@ -19,9 +20,31 @@ export const signUpWithEmail = async ({
       body: { email, password, name: fullName },
     });
 
-    // Account creation must not be reported as failed just because the
-    // optional background-workflow service is unavailable.
+    // Save the onboarding answers against the real MongoDB user record.
+    // Keep this separate from authentication so optional profile metadata
+    // cannot turn a successfully-created account into a false failure.
     if (response) {
+      try {
+        const mongoose = await connectToDatabase();
+        const db = mongoose.connection.db;
+        if (db) {
+          await db.collection("user").updateOne(
+            { email: email.toLowerCase() },
+            {
+              $set: {
+                country,
+                investmentGoals,
+                riskTolerance,
+                preferredIndustry,
+                updatedAt: new Date(),
+              },
+            },
+          );
+        }
+      } catch (profileError) {
+        console.error("Account created, but onboarding profile could not be saved:", profileError);
+      }
+
       try {
         await inngest.send({
           name: "app/user.created",
