@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import countryList from 'react-select-country-list';
 
 type CountrySelectProps = {
-    name: string;
+    name: keyof SignUpFormData;
     label: string;
     control: Control<SignUpFormData>;
     error?: FieldError;
